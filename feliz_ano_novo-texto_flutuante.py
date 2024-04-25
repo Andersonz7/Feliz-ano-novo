@@ -1,0 +1,112 @@
+import pygame
+import sys
+import random
+import math
+
+pygame.init()
+
+# Configurações
+screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)  # Utiliza a tela inteira
+width, height = screen.get_size()
+clock = pygame.time.Clock()
+colors = [(255, 0, 0), (255, 165, 0), (255, 255, 0), (0, 255, 0), (0, 0, 255), (75, 0, 130), (128, 0, 128)]
+
+# Função para gerar cor aleatória
+def random_color():
+    return random.choice(colors)
+
+# Classe para representar uma partícula de fogos de artifício
+class Particle:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.color = random_color()
+        self.radius = 5  # Aumenta o tamanho das partículas
+        self.border_color = (255, 255, 255)  # Cor da borda
+        self.border_width = 1  # Largura da borda
+        self.speed = random.uniform(2, 5)
+        self.angle = random.uniform(0, 2 * math.pi)
+
+    def move(self):
+        self.x += self.speed * math.cos(self.angle)
+        self.y -= self.speed * math.sin(self.angle)
+
+    def draw(self):
+        pygame.draw.circle(screen, self.border_color, (int(self.x), int(self.y)), self.radius + self.border_width)
+        pygame.draw.circle(screen, self.color, (int(self.x), int(self.y)), self.radius)
+
+particles = []
+
+# Mensagem a ser exibida
+message = "Feliz Ano Novo"
+
+# Lista para armazenar as cores de cada letra
+letter_colors = [random_color() for _ in range(len(message))]
+
+# Posição inicial, velocidade e direção aleatórias do texto
+text_x = random.randint(0, width)
+text_y = random.randint(0, height)
+text_speed = random.uniform(0.5, 1.5)  # Reduz a velocidade
+text_angle = random.uniform(0, 2 * math.pi)
+
+# Opacidade inicial do texto
+text_opacity = 255
+
+# Loop principal
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+    # Limpa a tela
+    screen.fill((0, 0, 0))
+
+    # Cria novas partículas aleatoriamente
+    if random.randint(0, 2) == 0:
+        particles.append(Particle(random.randint(0, width), random.randint(0, height)))
+
+    # Move e desenha as partículas
+    for particle in particles:
+        particle.move()
+        particle.draw()
+
+    # Remove partículas que saíram da tela
+    particles = [particle for particle in particles if 0 < particle.x < width and 0 < particle.y < height]
+
+    # Atualiza a cor de cada letra a cada 10 ticks
+    if pygame.time.get_ticks() % 10 == 0:
+        letter_colors = [random_color() for _ in range(len(message))]
+
+    # Move o texto de forma contínua em todas as direções
+    text_x += text_speed * math.cos(text_angle)
+    text_y -= text_speed * math.sin(text_angle)
+
+    # Se o texto sair da tela, reinicia a posição e a altura
+    if text_x > width:
+        text_x = -200
+    elif text_x < -200:
+        text_x = width
+
+    if text_y > height:
+        text_y = -50
+    elif text_y < -50:
+        text_y = height
+
+    # Ajusta a opacidade do texto
+    text_opacity -= 1
+    if text_opacity < 0:
+        text_opacity = 255
+
+    # Desenha a mensagem com cores aleatórias, borda e movimento
+    font = pygame.font.Font(None, 72)  # Aumenta o tamanho da fonte
+    for i, (letter, color) in enumerate(zip(message, letter_colors)):
+        text = font.render(letter, True, color)
+        text.set_alpha(text_opacity)  # Define a opacidade
+        screen.blit(text, (text_x + i * 50, text_y))
+
+    # Atualiza a tela
+    pygame.display.flip()
+
+    # Define a taxa de quadros por segundo
+    clock.tick(60)  # Reduz a taxa de quadros por segundo
